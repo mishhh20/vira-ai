@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vera AI Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --primary: #3b82f6;
+      --accent: #8b5cf6;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+      background-image: radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+      min-height: 100vh;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 1rem;
+    }
+    .title h1 { margin: 0; background: linear-gradient(to right, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .title p { color: var(--text-muted); margin: 0.5rem 0 0 0; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 350px; gap: 2rem; }
+    
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    h2 { margin-top: 0; font-size: 1.25rem; }
+    
+    /* Phone Mockup */
+    .phone {
+      border: 8px solid #334155;
+      border-radius: 2rem;
+      height: 600px;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-header {
+      background: #075e54;
+      padding: 1rem;
+      color: white;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .chat-area {
+      flex: 1;
+      background: #ece5dd;
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+    }
+    .chat-input-area {
+      display: flex;
+      padding: 0.5rem;
+      background: #f0f0f0;
+      gap: 0.5rem;
+    }
+    .chat-input {
+      flex: 1;
+      border: none;
+      border-radius: 1.5rem;
+      padding: 0.75rem 1rem;
+      outline: none;
+      font-size: 0.9rem;
+    }
+    .send-btn {
+      background: #128C7E;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .msg {
+      max-width: 80%;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      color: #000;
+      position: relative;
+    }
+    .msg.bot { background: #dcf8c6; align-self: flex-end; border-top-right-radius: 0; }
+    .msg.merchant { background: #fff; align-self: flex-start; border-top-left-radius: 0; }
+    .msg-time { display: block; font-size: 0.7rem; color: rgba(0,0,0,0.5); text-align: right; margin-top: 0.25rem; }
+    
+    .trigger-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .trigger-item {
+      padding: 1rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .trigger-item:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+    .trigger-meta { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;}
+    
+    .btn { background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    .btn:hover { background: var(--accent); }
+    
+    .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981; margin-right: 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">
+      <h1>Vera AI Assistant</h1>
+      <p>magicpin Merchant Growth Engine</p>
+    </div>
+    <div>
+      <span class="status-dot"></span> <span id="status">System Online</span>
+      <button class="btn" style="margin-left: 1rem;" onclick="simulateTick()">Simulate Tick</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Recent Triggers Processed</h2>
+      <ul class="trigger-list" id="triggerList">
+        <li class="trigger-item">
+          <div>Dip in conversions (₹299 Offer)</div>
+          <div class="trigger-meta"><span>Restaurant: The Spice Route</span> <span>1 min ago</span></div>
+        </li>
+        <li class="trigger-item">
+          <div>High local search volume</div>
+          <div class="trigger-meta"><span>Dentist: Smile Clinic</span> <span>5 mins ago</span></div>
+        </li>
+      </ul>
+      
+      <div style="margin-top: 2rem;">
+        <h2>System Architecture</h2>
+        <p style="color: var(--text-muted); line-height: 1.6;">
+          Vera uses an autonomous agent loop powered by <b>Gemini 2.5 Flash</b>. 
+          It synthesizes signals from a real-time event bus (triggers) combined with in-memory graph contexts (merchant, category, customer). 
+          Outputs are strictly deterministic JSON for WhatsApp routing.
+        </p>
+      </div>
+    </div>
+
+    <div class="phone">
+      <div class="phone-header">
+        <div style="width:30px; height:30px; background:#ccc; border-radius:50%; display:grid; place-items:center; color:#000;">V</div>
+        Vera (magicpin)
+      </div>
+      <div class="chat-area" id="chatArea">
+        <div class="msg bot">
+          Hi! Hungry customers are online near your restaurant right now. Should I promote your best-selling deal?
+          <span class="msg-time">10:00 AM</span>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" id="merchantInput" class="chat-input" placeholder="Type a reply..." onkeypress="handleKeyPress(event)">
+        <button class="send-btn" onclick="sendReply()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function getCurrentTime() {
+      const now = new Date();
+      return now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function addMessage(text, sender) {
+      const chat = document.getElementById('chatArea');
+      const msg = document.createElement('div');
+      msg.className = `msg ${sender}`;
+      msg.innerHTML = `${text}<span class="msg-time">${getCurrentTime()}</span>`;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') {
+        sendReply();
+      }
+    }
+
+    async function sendReply() {
+      const input = document.getElementById('merchantInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      addMessage(text, 'merchant');
+
+      // Add typing indicator
+      const chat = document.getElementById('chatArea');
+      const typing = document.createElement('div');
+      typing.className = 'msg bot';
+      typing.id = 'typingIndicator';
+      typing.innerHTML = '<i>typing...</i>';
+      chat.appendChild(typing);
+      chat.scrollTop = chat.scrollHeight;
+
+      try {
+        // Hit real backend
+        const res = await fetch('/v1/reply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation_id: "conv_123",
+            merchant_id: "001",
+            from_role: "merchant",
+            message: text,
+            received_at: new Date().toISOString(),
+            turn_number: 2
+          })
+        });
+        const data = await res.json();
+        
+        chat.removeChild(document.getElementById('typingIndicator'));
+        
+        if (data.body) {
+          addMessage(data.body, 'bot');
+        } else if (data.action === "end") {
+           addMessage("<i>(Vera closed the conversation)</i>", 'bot');
+        }
+      } catch (e) {
+        chat.removeChild(document.getElementById('typingIndicator'));
+        addMessage("Error connecting to server.", 'bot');
+      }
+    }
+
+    async function simulateTick() {
+      const chat = document.getElementById('chatArea');
+      
+      // Simulate typing
+      const typing = document.createElement('div');
+      typing.className = 'msg bot';
+      typing.innerHTML = '<i>Vera is thinking...</i>';
+      chat.appendChild(typing);
+      chat.scrollTop = chat.scrollHeight;
+
+      setTimeout(() => {
+        chat.removeChild(typing);
+        const msg = document.createElement('div');
+        msg.className = 'msg bot';
+        msg.innerHTML = `Beauty searches are trending in your area. Ready to launch your best package to nearby customers? <br><br><b>Reply YES to launch</b><span class="msg-time">Just now</span>`;
+        chat.appendChild(msg);
+        chat.scrollTop = chat.scrollHeight;
+        
+        // Add to trigger list
+        const list = document.getElementById('triggerList');
+        const li = document.createElement('li');
+        li.className = 'trigger-item';
+        li.innerHTML = `<div>Competitor launched new offer</div><div class="trigger-meta"><span>Salon: Glow & Go</span> <span>Just now</span></div>`;
+        list.insertBefore(li, list.firstChild);
+      }, 1500);
+    }
+  </script>
+</body>
+</html>
