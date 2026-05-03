@@ -33,7 +33,7 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 LLM_API_KEY = os.getenv("GEMINI_API_KEY", "")  # <-- PUT YOUR API KEY HERE
 
 # Model to use (leave empty for default, or specify like "gpt-4o", "claude-3-5-sonnet-20241022", etc.)
-LLM_MODEL = "gemini-2.5-flash"  # <-- Optional: specify model or leave empty for default
+LLM_MODEL = "gemini-3-flash-preview"  # <-- Optional: specify model or leave empty for default
 
 # For Ollama only: local server URL
 OLLAMA_URL = "http://localhost:11434"
@@ -227,10 +227,20 @@ class GeminiProvider(LLMProvider):
         }).encode("utf-8")
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
-        req = urlrequest.Request(url, data=body, headers={"Content-Type": "application/json"})
-        resp = urlrequest.urlopen(req, timeout=TIMEOUT_LLM)
-        data = json.loads(resp.read().decode("utf-8"))
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+        
+        for attempt in range(5):
+            try:
+                req = urlrequest.Request(url, data=body, headers={"Content-Type": "application/json"})
+                resp = urlrequest.urlopen(req, timeout=TIMEOUT_LLM)
+                data = json.loads(resp.read().decode("utf-8"))
+                return data["candidates"][0]["content"]["parts"][0]["text"]
+            except Exception as e:
+                if "429" in str(e):
+                    print(f"    [Judge] Rate limited (429). Waiting 60s... (Attempt {attempt+1}/5)")
+                    time.sleep(60)
+                    continue
+                raise e
+        return ""
 
 
 class DeepSeekProvider(LLMProvider):

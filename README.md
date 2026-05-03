@@ -1,60 +1,41 @@
-# vera-bot
+# Vera AI — Merchant Growth Assistant
 
-**Vera** is magicpin's AI-powered merchant growth assistant — a FastAPI server that composes hyper-specific WhatsApp-style outreach messages for local merchants using real-time signals and Claude claude-sonnet-4-20250514.
+**Vera** is magicpin's elite AI merchant-growth assistant. This bot engages merchants on WhatsApp using real-time signals to drive business growth.
+
+## Core Features
+
+- **Gemini-Powered Composition**: Uses Gemini 1.5 Flash for high-quality, context-aware outreach.
+- **Smart Heuristic Engine**: A robust fallback system that maintains specificity and personalization even when LLM quotas are exhausted.
+- **Auto-Reply & Loop Detection**: Sophisticated detection of canned WhatsApp replies and self-looping patterns.
+- **Multi-Turn Context**: Maintains conversation history for more natural interactions and intent transitions.
+- **Hinglish Support**: Native-feeling Hindi-English code-mix for high engagement with Indian merchants.
 
 ## Approach
 
-The server is a stateless-first design with a lightweight in-memory context store. Merchant data arrives via `/v1/context` (versioned, idempotent), and message generation happens on-demand via `/v1/tick`. This separation means the judge harness can pre-load merchant profiles before requesting messages, mirroring a real event-driven pipeline.
+Vera uses a **4-layer context framework**:
+1. **Category Context**: Deep vertical knowledge (e.g., Dentist vs. Restaurant).
+2. **Merchant Context**: Real-time business performance, name, and offers.
+3. **Trigger Context**: The "Why Now?" signal (e.g., Diwali, heatwave, performance dip).
+4. **Customer Context**: Individual patient/customer data for highly targeted outreach.
 
-## Why Claude claude-sonnet-4-20250514?
+## Technical Highlights
 
-Claude claude-sonnet-4-20250514 was chosen for the best balance of quality, speed, and cost. It reliably follows structured JSON output instructions, respects character-count constraints, and produces natural WhatsApp-style copy — all critical for scoring well on specificity, category voice, and engagement compulsion. Opus would be higher quality but 5× slower and more expensive; Haiku would be faster but struggles with the nuanced category-voice switching this task demands.
-
-## Key Tradeoffs
-
-| Decision | Why |
-|---|---|
-| In-memory store (no database) | Zero-config deployment; sufficient for a single-instance evaluation harness. A production upgrade to Redis or Postgres is a one-file change. |
-| Global 200 OK handler | The judge harness penalises 5xx errors. Every endpoint returns 200, even on unexpected failures, with an `error` field for debugging. |
-| 3-layer JSON extraction | Claude occasionally wraps JSON in markdown. The parser tries `json.loads` → brace-slicing → regex, guaranteeing a parsed result or a graceful fallback. |
-| Category-specific fallbacks | If the AI is unavailable, each category still gets a plausible hardcoded message so the merchant experience never breaks. |
-
-## Endpoints
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/v1/healthz` | Health check |
-| GET | `/v1/metadata` | Bot capabilities |
-| POST | `/v1/context` | Store merchant context (versioned) |
-| POST | `/v1/tick` | Generate outreach message |
-| POST | `/v1/reply` | Acknowledge merchant reply |
-
-## Getting an Anthropic API Key
-
-Sign up at [console.anthropic.com](https://console.anthropic.com/) — new accounts receive free trial credits which are sufficient to run and test this bot.
+- **Heuristic-First Fallback**: If the LLM fails, Vera uses `smart_heuristic_compose` to synthesize triggers with merchant data, ensuring we never send generic "10% off" messages.
+- **Intent Transitioning**: Detects affirmative merchant replies and switches from "pitching" to "actioning" mode immediately.
+- **Strict Specificity**: Every message anchors on verifiable facts (exact search numbers, price points, or research citations).
 
 ## Quick Start
 
 ```bash
-# 1. Clone and enter the repo
-git clone https://github.com/YOUR_USERNAME/vera-bot.git
-cd vera-bot
-
-# 2. Create a virtual environment
-python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # macOS / Linux
-
-# 3. Install dependencies
+# 1. Install dependencies
 pip install -r requirements.txt
 
-# 4. Set up your API key
-copy .env.example .env       # Windows
-# cp .env.example .env       # macOS / Linux
-# Then edit .env and paste your real Anthropic API key
+# 2. Set up API Key
+# Add GEMINI_API_KEY to your .env file
 
-# 5. Run the server
-uvicorn main:app --reload --port 8000
+# 3. Run the server
+uvicorn main:app --port 8000
 ```
 
-Open [http://localhost:8000/v1/healthz](http://localhost:8000/v1/healthz) to verify.
+## Evaluation Results
+The bot is optimized for the 5-dimension rubric: Specificity, Category Fit, Merchant Fit, Trigger Relevance, and Engagement Compulsion.
